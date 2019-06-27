@@ -4,8 +4,8 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
-	"github.com/BaileyZheng/diy_docker/code-5.3/container"
-	"github.com/BaileyZheng/diy_docker/code-5.3/cgroups/subsystems"
+	"github.com/BaileyZheng/diy_docker/container"
+	"github.com/BaileyZheng/diy_docker/cgroups/subsystems"
 )
 
 var runCommand = cli.Command{
