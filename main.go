@@ -19,6 +19,7 @@ func main() {
 		listCommand,
 		logCommand,
 		execCommand,
+		removeCommand,
 		stopCommand,
 	}
 	
