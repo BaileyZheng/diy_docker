@@ -4,7 +4,7 @@ import(
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/BaileyZheng/diy_docker/code-5.2/container"
+	"github.com/BaileyZheng/diy_docker/container"
 	"io/ioutil"
 	"os"
 	"text/tabwriter"
