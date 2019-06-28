@@ -14,14 +14,14 @@ import (
 	"fmt"
 )
 
-func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerName, volume, imageName string){
+func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerName, volume, imageName string, envSlice []string){
 	if containerName==""{
 		containerName=randStringBytes(10)
 	}
 	if imageName==""{
 		imageName="busybox"
 	}
-	parent,writePipe:=container.NewParentProcess(tty,containerName,volume,imageName)
+	parent,writePipe:=container.NewParentProcess(tty,containerName,volume,imageName,envSlice)
 	if parent == nil {
 		log.Errorf("New parent process error")
 		return
