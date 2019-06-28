@@ -21,6 +21,7 @@ func main() {
 		execCommand,
 		removeCommand,
 		stopCommand,
+		commitCommand,
 	}
 	
 	app.Before = func(context *cli.Context) error {

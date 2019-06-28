@@ -13,6 +13,13 @@ import(
 func ListContainers(){
 	dirURL:=fmt.Sprintf(container.DefaultInfoLocation,"")
 	dirURL=dirURL[:len(dirURL)-1]
+	exist,err:=container.PathExists(dirURL)
+	if !exist{
+		if err:=os.MkdirAll(dirURL,0777);err!=nil{
+			log.Errorf("Mkdir dir %s error %v",dirURL,err)
+			return
+		}
+	}
 	files,err:=ioutil.ReadDir(dirURL)
 	if err!=nil{
 		log.Errorf("Read dir %s error %v",dirURL,err)

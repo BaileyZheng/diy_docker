@@ -38,6 +38,14 @@ var runCommand = cli.Command{
 			Name: "name",
 			Usage: "container name",
 		},
+		cli.StringFlag{
+			Name: "v",
+			Usage: "volume",
+		},
+		cli.StringFlag{
+			Name: "image",
+			Usage: "image",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if len(context.Args())<1{
@@ -60,7 +68,9 @@ var runCommand = cli.Command{
 		}
 		log.Infof("createTty %v", createTty)
 		containerName:=context.String("name")
-		Run(createTty, cmdArray, resConf,containerName)
+		imageName:=context.String("image")
+		volume:=context.String("v")
+		Run(createTty, cmdArray, resConf,containerName,volume,imageName)
 		return nil
 	},
 }
@@ -141,6 +151,20 @@ var removeCommand=cli.Command{
 		}
 		containerName:=context.Args().Get(0)
 		removeContainer(containerName)
+		return nil
+	},
+}
+
+var commitCommand=cli.Command{
+	Name: "commit",
+	Usage: "commit a container into image",
+	Action: func(context *cli.Context) error{
+		if len(context.Args())<2{
+			return fmt.Errorf("missing container name and image name")
+		}
+		containerName:=context.Args().Get(0)
+		imageName:=context.Args().Get(1)
+		commitContainer(containerName,imageName)
 		return nil
 	},
 }

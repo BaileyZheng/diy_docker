@@ -15,6 +15,7 @@ type ContainerInfo struct{
 	Command string `json:"command"`
 	CreatedTime string `json:"createTime"`
 	Status	string `json:"status"`
+	Volume  string `json:"volume"`
 }
 
 var(
@@ -24,9 +25,12 @@ var(
 	DefaultInfoLocation string="/var/run/mydocker/%s/"
 	ConfigName	string="config.json"
 	ContainerLogFile string="container.log"
+	RootUrl 	string="/root"
+	MntUrl		string="/root/mnt/%s"
+	WriteLayerUrl	string="/root/writeLayer/%s"
 )
 
-func NewParentProcess(tty bool, containerName string) (*exec.Cmd, *os.File){
+func NewParentProcess(tty bool, containerName, volume, imageName string) (*exec.Cmd, *os.File){
 	readPipe, writePipe, err := NewPipe()
 	if err != nil{
 		log.Errorf("New pipe error %v", err)
@@ -55,7 +59,8 @@ func NewParentProcess(tty bool, containerName string) (*exec.Cmd, *os.File){
 		cmd.Stdout=stdLogFile
 	}
 	cmd.ExtraFiles=[]*os.File{readPipe}
-	cmd.Dir="/root/busybox"
+	NewWorkSpace(volume,imageName,containerName)
+	cmd.Dir=fmt.Sprintf(MntUrl,containerName)
 	return cmd,writePipe
 }
 
