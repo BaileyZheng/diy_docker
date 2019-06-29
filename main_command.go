@@ -6,6 +6,7 @@ import (
 	"github.com/urfave/cli"
 	"github.com/BaileyZheng/diy_docker/container"
 	"github.com/BaileyZheng/diy_docker/cgroups/subsystems"
+	"github.com/BaileyZheng/diy_docker/network"
 	"os"
 )
 
@@ -171,5 +172,40 @@ var commitCommand=cli.Command{
 		imageName:=context.Args().Get(1)
 		commitContainer(containerName,imageName)
 		return nil
+	},
+}
+
+var networkCommand=cli.Command{
+	Name: "network",
+	Usage: "container network commands",
+	Subcommands: []cli.Command{
+		{	
+			Name: "create",
+			Usage: "create a container network",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name: "subnet",
+					Usage: "subnet cide",
+				},
+				cli.StringFlag{
+					Name: "driver",
+					Usage: "network driver",
+				},
+			},
+			Action: func(context *cli.Context) error{
+				if len(context.Args())<1{
+					return fmt.Errorf("Missing network name")
+				}
+				network.Init()
+				driver:=context.String("driver")
+				subnet:=context.String("subnet")
+				name:=context.Args()[0]
+				log.Infof("driver:%s, subnet:%s, name:%s",driver,subnet,name)
+				if err:=network.CreateNetwork(driver,subnet,name);err!=nil{
+					return fmt.Errorf("create network error %+v",err)
+				}
+				return nil
+			},
+		},
 	},
 }
