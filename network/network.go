@@ -14,6 +14,7 @@ import(
 	"path/filepath"
 	"runtime"
 	"strings"
+	"text/tabwriter"
 )
 
 type Network struct{
@@ -231,6 +232,19 @@ func configPortMapping(ep *Endpoint,cinfo *container.ContainerInfo) error{
 			log.Errorf("iptables Output %v",output)
 			continue
 		}
+	}
+	return nil
+}
+
+func ListNetwork() error{
+	w:=tabwriter.NewWriter(os.Stdout,12,1,3,' ',0)
+	fmt.Fprint(w,"NAME\tIpRange\tDriver\n")
+	for _,nw:=range networks{
+		fmt.Fprintf(w,"%s\t%s\t%s\n",nw.Name,nw.IpRange.String(),nw.Driver)
+	}
+	if err:=w.Flush();err!=nil{
+		log.Errorf("Flush error %v",err)
+		return err
 	}
 	return nil
 }

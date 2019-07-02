@@ -217,5 +217,16 @@ var networkCommand=cli.Command{
 				return nil
 			},
 		},
+		{
+			Name: "list",
+			Usage: "list network",
+			Action:func(context *cli.Context) error{
+				network.Init()
+				if err:=network.ListNetwork();err!=nil{
+					return fmt.Errorf("list network error %v",err)
+				}
+				return nil
+			},
+		},
 	},
 }
