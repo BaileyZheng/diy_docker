@@ -4,6 +4,7 @@ import (
 	"github.com/BaileyZheng/diy_docker/container"
 	"github.com/BaileyZheng/diy_docker/cgroups/subsystems"
 	"github.com/BaileyZheng/diy_docker/cgroups"
+	"github.com/BaileyZheng/diy_docker/network"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"fmt"
 )
 
-func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerName, volume, imageName string, envSlice []string){
+func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerName, volume, imageName string, envSlice []string,nw string,portmapping []string){
 	if containerName==""{
 		containerName=randStringBytes(10)
 	}
@@ -29,7 +30,7 @@ func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerN
 	if err:= parent.Start(); err!=nil{
 		log.Error(err)
 	}
-	containerName,err:=recordContainerInfo(parent.Process.Pid,comArray,containerName,volume)
+	containerInfo,err:=recordContainerInfo(parent.Process.Pid,comArray,containerName,volume)
 	if err!=nil{
 		log.Errorf("Record container info error %v", err)
 		return
@@ -39,6 +40,14 @@ func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerN
 	cgroupManager.Set(res)
 	cgroupManager.Apply(parent.Process.Pid)
 	sendInitCommand(comArray,writePipe)
+	if nw!=""{
+		network.Init()
+		containerInfo.PortMapping=portmapping
+		if err:=network.Connect(nw,containerInfo);err!=nil{
+			log.Errorf("network connect error %v",err)
+			return
+		}
+	}
 	if tty {
 		parent.Wait()
 		deleteContainerInfo(containerName)
@@ -63,7 +72,7 @@ func randStringBytes(n int) string{
 	return string(b)
 }
 
-func recordContainerInfo(containerPID int, commandArray []string, containerName, volume string) (string, error){
+func recordContainerInfo(containerPID int, commandArray []string, containerName, volume string) (*container.ContainerInfo, error){
 	id:=randStringBytes(10)
 	createTime:=time.Now().Format("2006-01-02 03:04:05")
 	command := strings.Join(commandArray,"")
@@ -83,26 +92,26 @@ func recordContainerInfo(containerPID int, commandArray []string, containerName,
 	jsonBytes, err := json.Marshal(containerInfo)
 	if err!=nil{
 		log.Errorf("Record container info error %v",err)
-		return "",err
+		return nil,err
 	}
 	jsonStr:=string(jsonBytes)
 	dirUrl:=fmt.Sprintf(container.DefaultInfoLocation,containerName)
 	if err:=os.MkdirAll(dirUrl,0622);err!=nil{
 		log.Errorf("Mkdir error %s error %v",dirUrl,err)
-		return "",err
+		return nil,err
 	}
 	fileName:=dirUrl+"/"+container.ConfigName
 	file,err:=os.Create(fileName)
 	defer file.Close()
 	if err != nil {
 		log.Errorf("Create file %s error %v",fileName,err)
-		return "",err
+		return nil,err
 	}
 	if _,err:=file.WriteString(jsonStr);err!=nil{
 		log.Errorf("File write string error %v",err)
-		return "",err
+		return nil,err
 	}
-	return containerName,nil
+	return containerInfo,nil
 }
 
 func deleteContainerInfo(containerId string){

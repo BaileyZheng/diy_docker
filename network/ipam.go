@@ -80,6 +80,7 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP,err error){
 	if err:=ipam.load();err!=nil{
 		log.Errorf("load allocation info error %v",err)
 	}
+	_,subnet,_=net.ParseCIDR(subnet.String())
 	one,size:=subnet.Mask.Size()
 	if _,exist:=(*ipam.Subnets)[subnet.String()];!exist{
 		(*ipam.Subnets)[subnet.String()]=strings.Repeat("0",1<<uint8(size-one))
@@ -91,7 +92,7 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP,err error){
 			(*ipam.Subnets)[subnet.String()]=string(ipalloc)
 			ip=subnet.IP
 			for t:=uint(4);t>0;t-=1{
-				[]byte(ip)[4-t]+=uint8(c>>((t-1)*8))
+				[]byte(ip)[4-t] += uint8(c >> ((t-1) * 8))
 			}
 			ip[3]+=1
 			break

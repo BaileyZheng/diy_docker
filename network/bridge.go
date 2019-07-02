@@ -68,11 +68,11 @@ func createBridgeInterface(bridgeName string) error{
 func setInterfaceIp(bridgeName, rawIp string) error{
 	iface,err:=netlink.LinkByName(bridgeName)
 	if err!=nil{
-		return fmt.Errorf("get interface error %v",err)
+		return fmt.Errorf("get interface %s error %v",bridgeName,err)
 	}
 	ipNet,err:=netlink.ParseIPNet(rawIp)
 	if err!=nil{
-		return err
+		return fmt.Errorf("rawIP: %s",rawIp)
 	}
 	addr:=&netlink.Addr{IPNet:ipNet}
 	return netlink.AddrAdd(iface,addr)
@@ -90,10 +90,34 @@ func setInterfaceUP(bridgeName string) error{
 }
 
 func setupIPTables(bridgeName string, subnet *net.IPNet) error{
-	iptablesCmd:=fmt.Sprintf("-t nat -A POSTROUTING -s %s -o %s -j MASQUERADE", subnet.String(),bridgeName)
+	iptablesCmd:=fmt.Sprintf("-t nat -A POSTROUTING -s %s ! -o %s -j MASQUERADE", subnet.String(),bridgeName)
 	if output,err:=exec.Command("iptables",strings.Split(iptablesCmd," ")...).Output();err!=nil{
 		log.Errorf("exec command iptables error %v, output %v",err,output)
 		return err
 	}
 	return nil
 }
+
+func (d *BridgeNetworkDriver) Connect(network *Network, ep *Endpoint) error{
+	bridgeName:=network.Name
+	br,err:=netlink.LinkByName(bridgeName)
+	if err!=nil{
+		log.Errorf("find bridge by name err %v",err)
+		return err
+	}
+	la:=netlink.NewLinkAttrs()
+	la.Name=ep.ID[:5]
+	la.MasterIndex=br.Attrs().Index
+	ep.Device=netlink.Veth{
+		LinkAttrs:la,
+		PeerName:"cif-"+ep.ID[:5],
+	}
+	if err=netlink.LinkAdd(&ep.Device);err!=nil{
+		return fmt.Errorf("add endpoint device error %v",err)
+	}
+	if err=netlink.LinkSetUp(&ep.Device);err!=nil{
+		return fmt.Errorf("set up endpoint device error %v",err)
+	}
+	return nil
+}
+
