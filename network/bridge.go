@@ -121,3 +121,11 @@ func (d *BridgeNetworkDriver) Connect(network *Network, ep *Endpoint) error{
 	return nil
 }
 
+func (d *BridgeNetworkDriver) Delete(network Network) error{
+	bridgeName:=network.Name
+	br,err:=netlink.LinkByName(bridgeName)
+	if err!=nil{
+		return err
+	}
+	return netlink.LinkDel(br)
+}

@@ -36,6 +36,7 @@ type NetworkDriver interface{
 	Name() string
 	Create(subnet string,name string) (*Network,error)
 	Connect(network *Network,endpoint *Endpoint) error
+	Delete(network Network) error
 }
 
 var (
@@ -247,4 +248,30 @@ func ListNetwork() error{
 		return err
 	}
 	return nil
+}
+
+func DeleteNetwork(networkName string) error{
+	nw,exist:=networks[networkName]
+	if !exist{
+		return fmt.Errorf("No such network: %s",networkName)
+	}
+	if err:=ipAllocator.Release(nw.IpRange,&nw.IpRange.IP);err!=nil{
+		return fmt.Errorf("release network error %v",err)
+	}
+	if err:=drivers[nw.Driver].Delete(*nw);err!=nil{
+		return fmt.Errorf("delete network driver error %v",err)
+	}
+	return nw.remove(defaultNetworkPath)
+}
+
+func (nw *Network) remove(dumpPath string) error{
+	if _,err:=os.Stat(path.Join(dumpPath,nw.Name));err!=nil{
+		if os.IsNotExist(err){
+			return nil
+		}else{
+			return err
+		}
+	}else{
+		return os.Remove(path.Join(dumpPath,nw.Name))
+	}
 }

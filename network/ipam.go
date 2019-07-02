@@ -101,3 +101,23 @@ func (ipam *IPAM) Allocate(subnet *net.IPNet) (ip net.IP,err error){
 	ipam.dump()
 	return
 }
+
+func (ipam *IPAM) Release(subnet *net.IPNet,ipaddr *net.IP) error{
+	ipam.Subnets=&map[string]string{}
+	_,subnet,_=net.ParseCIDR(subnet.String())
+	if err:=ipam.load();err!=nil{
+		log.Errorf("load allocation info error %v",err)
+		return err
+	}
+	c:=0
+	releaseIP:=ipaddr.To4()
+	releaseIP[3]-=1
+	for t:=uint(4);t>0;t-=1{
+		c+=int(releaseIP[t-1]-subnet.IP[t-1]) << ((4-t)*8)
+	}
+	ipalloc:=[]byte((*ipam.Subnets)[subnet.String()])
+	ipalloc[c]='0'
+	(*ipam.Subnets)[subnet.String()]=string(ipalloc)
+	ipam.dump()
+	return nil
+}
